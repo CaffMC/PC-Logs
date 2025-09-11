@@ -4,8 +4,10 @@ const addBtn = document.getElementById('addBtn');
 const closeModal = document.getElementById('closeModal');
 const buildForm = document.getElementById('buildForm');
 const logList = document.getElementById('logList');
+const moreLogsBtn = document.getElementById('moreLogsBtn');
+const MAX_LOGS_MAIN = 4;
 
-let logs = [];
+let logs = JSON.parse(localStorage.getItem('logs')) || [];
 
 addBtn.onclick = () => {
     modal.style.display = 'flex';
@@ -17,6 +19,10 @@ const closeModalFunc = () => {
     overlay.style.display = 'none';
 };
 
+moreLogsBtn.onclick = () => {
+    window.location.href = 'compact-logs.html';
+};
+
 closeModal.onclick = closeModalFunc;
 overlay.onclick = closeModalFunc;
 
@@ -25,7 +31,6 @@ buildForm.onsubmit = function (event) {
 
     const formData = new FormData(buildForm);
 
-    // Gather all parts and prices, default to empty string or 0
     const name = formData.get('name') || '';
 
     const parts = {
@@ -55,14 +60,15 @@ buildForm.onsubmit = function (event) {
 
     const sale = parseFloat(formData.get('sale')) || 0;
 
-    // Calculate total cost
     const totalCost = Object.keys(parts)
         .filter(key => key.toLowerCase().includes('price'))
         .reduce((acc, key) => acc + parts[key], 0);
 
     const profit = sale - totalCost;
 
-    logs.push({ name, parts, totalCost, sale, profit });
+    logs.unshift({ name, parts, totalCost, sale, profit });
+
+    localStorage.setItem('logs', JSON.stringify(logs)); // Save logs persistently
 
     buildForm.reset();
     closeModalFunc();
@@ -77,14 +83,16 @@ function renderLogs() {
         return;
     }
 
-    logs.forEach(log => {
+    const displayLogs = logs.slice(0, MAX_LOGS_MAIN);
+
+    displayLogs.forEach(log => {
         const el = document.createElement('div');
+        el.classList.add('logEntry');
         el.style.border = '1px solid #eee';
         el.style.padding = '12px';
         el.style.marginBottom = '16px';
         el.style.borderRadius = '5px';
 
-        // Format parts display only if name is filled
         const partDetails = Object.entries(log.parts)
             .filter(([key, value]) => value && !key.toLowerCase().includes('price'))
             .map(([key, value]) => {
@@ -94,11 +102,11 @@ function renderLogs() {
             .join('<br>');
 
         el.innerHTML = `
-      <strong>${log.name || 'Unnamed Build'}</strong><br>
-      ${partDetails}<br>
-      <strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}<br>
-      <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
-      <strong>Profit:</strong> $${log.profit.toFixed(2)}
+        <strong>${log.name || 'Unnamed Build'}</strong><br>
+        ${partDetails}<br>
+        <strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}<br>
+        <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
+        <strong>Profit:</strong> $${log.profit.toFixed(2)}
     `;
         logList.appendChild(el);
     });

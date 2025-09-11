@@ -1,121 +1,232 @@
 body {
+    --bg-image: url('white-pc.webp');
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f0f4f8;
-    /* light blue-gray background */
-    display: flex;
-    height: 100vh;
+    background-color: #f0f4f8;
     color: #333;
-}
-
-.part-row {
+    height: 100vh;
     display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-    align-items: center;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    position: relative;
+    /* needed for ::before */
 }
 
-.part-input,
-.price-input {
-    flex: 1;
-    /* Equal width */
-    min-width: 0;
-    /* Prevent overflow */
-    padding: 8px 12px;
-    font-size: 14px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    box-sizing: border-box;
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--bg-image) center / cover no-repeat fixed;
+    z-index: -1;
 }
 
-.logs {
-    flex: 2;
-    padding: 32px;
-    border-right: 3px solid #5145cd;
-    /* purple accent */
-    background: #ffffff;
-    box-shadow: 2px 0 8px rgba(81, 69, 205, 0.15);
-    overflow-y: auto;
-}
-
+/* Sidebar with Buttons */
 .sidebar {
-    flex: 1;
-    padding: 32px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    background: #ffffff;
-    /* keep sidebar white */
-    box-shadow: none;
-    /* remove sidebar shadow */
+    justify-content: space-between;
+    /* top and bottom alignment */
+    align-items: flex-end;
+    height: 100vh;
+    /* full viewport height */
+    padding: 32px;
+    box-sizing: border-box;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 200px;
+    /* your sidebar width */
+    background: transparent;
+    z-index: 10;
 }
 
 .btn {
-    background: #ff6f61;
-    /* coral colored button */
-    color: white;
-    border: none;
-    padding: 12px 28px;
+  background-color: #ff6f61;
+  color: white;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  /* and other styling as needed */
+}
+
+#addBtn,
+#moreLogsBtn {
+    width: 100%;
+    max-width: 180px;
+    padding: 12px 32px;
     border-radius: 25px;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: none;
+    line-height: 1;
     cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(255, 111, 97, 0.4);
-    transition: background 0.3s ease;
-    align-self: flex-start;
-    /* align button top-left */
-    margin-bottom: 24px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+    white-space: nowrap;
+    background-color: #ff6f61;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.btn:hover {
-    background: #ff3b22;
-    /* darker coral on hover */
-    box-shadow: 0 6px 12px rgba(255, 59, 34, 0.6);
+#addBtn:hover,
+#moreLogsBtn:hover,
+#addBtn:focus,
+#moreLogsBtn:focus {
+    background-color: #e65b4f;
+    outline: none;
 }
 
+/* Logs Section */
+.logs {
+    flex: 2;
+    padding: 32px;
+    margin: 20px 32px;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow-y: auto;
+    height: 100vh;
+}
 
-.modal-content {
-    background: #fffaf0;
-    /* warm light cream */
-    padding: 36px;
-    border-radius: 10px;
-    box-shadow: 0 3px 30px rgba(255, 111, 97, 0.3);
-    min-width: 350px;
-    position: relative;
+h2 {
+    color: #000;
+    font-size: 200%;
+}
+
+.logEntry {
+    background-color: white;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.027);
+    word-wrap: break-word;
     color: #333;
 }
 
-.close {
-    position: absolute;
-    top: 10px;
-    right: 18px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #ff6f61;
-    font-weight: bold;
+/* Modal Overlay */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: none;
+    z-index: 999;
 }
 
+/* Modal Container */
+#modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+/* Modal Box */
+.modal-content {
+    background: #fffaf0;
+    color: #333;
+    border-radius: 16px;
+    padding: 32px 36px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 80vh;
+    box-shadow: 0 8px 32px rgba(255, 111, 97, 0.35);
+    position: relative;
+    overflow-y: auto;
+}
+
+/* Close Button */
+.close {
+    position: absolute;
+    top: 16px;
+    right: 22px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #ff6f61;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Labels */
 label {
     font-weight: 600;
     color: #5145cd;
-    /* purple for labels */
+    margin-bottom: 6px;
+    display: block;
+    font-size: 16px;
 }
 
+/* Text & Number Inputs */
 input[type="text"],
 input[type="number"] {
     width: 100%;
-    padding: 8px 10px;
-    margin-top: 6px;
-    margin-bottom: 15px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
     font-size: 16px;
-    transition: border-color 0.3s ease;
+    font-weight: 400;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+    user-select: text;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus {
     border-color: #ff6f61;
     outline: none;
+    box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
+}
+
+/* Layout Part-Price Row */
+.part-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: center;
+}
+
+.part-input,
+.price-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.part-input:focus,
+.price-input:focus {
+    border-color: #ff6f61;
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
+}
+
+/* Scrollbar for logs */
+.logs::-webkit-scrollbar {
+    width: 10px;
+}
+
+.logs::-webkit-scrollbar-track {
+    background: #f0f4f8;
+    border-radius: 10px;
+}
+
+.logs::-webkit-scrollbar-thumb {
+    background-color: #5145cd;
+    border-radius: 10px;
+    border: 3px solid #f0f4f8;
 }

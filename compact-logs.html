@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compact Build Logs</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 32px;
+            color: #333;
+            background-image: url('image.png');
+        }
+
+        h2 {
+            margin-bottom: 24px;
+            color: #ffffff;
+        }
+
+        #backBtn {
+            position: static !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 12px 32px;
+            background-color: #ff6f61;
+            color: white;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            margin: 10px 0;
+            display: inline-block;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        #compactLogList {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .compactLogEntry {
+            background: white;
+            padding: 10px 20px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .compactLogEntry:hover {
+            background-color: #ffecea;
+        }
+
+        .logName {
+            font-weight: 700;
+            flex-grow: 1;
+        }
+
+        .logSummary {
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 20px;
+        }
+
+        /* Modal */
+        #modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        #modalContent {
+            background: #fffaf0;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 480px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(255, 111, 97, 0.35);
+            position: relative;
+        }
+
+        #modalClose {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #ff6f61;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #removeLogBtn {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: #ff6f61;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>All Build Logs (click them to expand)</h2>
+    <div id="compactLogList"></div>
+
+    <button id="backBtn" class="btn">Back to Main Page</button>
+
+    <div id="modal">
+        <div id="modalContent">
+            <span id="modalClose">&times;</span>
+            <div id="modalDetails"></div>
+            <button id="removeLogBtn">Remove</button>
+        </div>
+    </div>
+
+    <script>
+        let logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const compactLogList = document.getElementById('compactLogList');
+        const modal = document.getElementById('modal');
+        const modalDetails = document.getElementById('modalDetails');
+        const modalClose = document.getElementById('modalClose');
+
+        const backBtn = document.getElementById('backBtn');
+        backBtn.onclick = () => {
+            window.location.href = 'index.html'; // Adjust if needed
+        };
+
+        const removeLogBtn = document.getElementById('removeLogBtn');
+        let currentLogIndex = null; // Track current log index shown in modal
+
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function createDetailsHTML(log) {
+            const partsHTML = Object.entries(log.parts)
+                .filter(([key, value]) => value && !key.toLowerCase().includes('price'))
+                .map(([key, value]) => {
+                    const price = log.parts[key + 'Price'] || 0;
+                    return `<strong>${capitalize(key)}:</strong> ${value} ($${price.toFixed(2)})`;
+                })
+                .join('<br>');
+
+            return `
+        <h3>${log.name || 'Unnamed Build'}</h3>
+        ${partsHTML}
+        <hr/>
+        <p><strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}</p>
+        <p><strong>Sale Price:</strong> $${log.sale.toFixed(2)}</p>
+        <p><strong>Profit:</strong> $${log.profit.toFixed(2)}</p>
+      `;
+        }
+
+        function openModal(log, index) {
+            currentLogIndex = index;
+            modalDetails.innerHTML = createDetailsHTML(log);
+            modal.style.display = 'flex';
+        }
+
+        removeLogBtn.onclick = () => {
+            if (currentLogIndex !== null) {
+                logs.splice(currentLogIndex, 1);
+                localStorage.setItem('logs', JSON.stringify(logs));
+                closeModalFunc();
+                renderLogs();
+            }
+        };
+
+        function closeModalFunc() {
+            modal.style.display = 'none';
+            modalDetails.innerHTML = '';
+        }
+
+        modalClose.onclick = closeModalFunc;
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModalFunc();
+        };
+
+        function renderLogs() {
+            compactLogList.innerHTML = '';
+            if (logs.length === 0) {
+                compactLogList.innerHTML = '<p>No builds logged yet.</p>';
+            } else {
+                logs.forEach((log, index) => {
+                    const entry = document.createElement('div');
+                    entry.classList.add('compactLogEntry');
+                    entry.innerHTML = `
+          <span class="logName">${log.name || 'Unnamed Build'}</span>
+          <span class="logSummary">
+            Cost: $${log.totalCost.toFixed(2)} |
+            Sale: $${log.sale.toFixed(2)} |
+            Profit: $${log.profit.toFixed(2)}
+          </span>
+          `;
+                    entry.onclick = () => openModal(log, index);
+                    compactLogList.appendChild(entry);
+                });
+            }
+        }
+
+        // Initial render
+        renderLogs();
+    </script>
+</body>
+
+</html>
