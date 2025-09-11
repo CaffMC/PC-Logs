@@ -1,0 +1,121 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f4f8;
+    /* light blue-gray background */
+    display: flex;
+    height: 100vh;
+    color: #333;
+}
+
+.part-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.part-input,
+.price-input {
+    flex: 1;
+    /* Equal width */
+    min-width: 0;
+    /* Prevent overflow */
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.logs {
+    flex: 2;
+    padding: 32px;
+    border-right: 3px solid #5145cd;
+    /* purple accent */
+    background: #ffffff;
+    box-shadow: 2px 0 8px rgba(81, 69, 205, 0.15);
+    overflow-y: auto;
+}
+
+.sidebar {
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: #ffffff;
+    /* keep sidebar white */
+    box-shadow: none;
+    /* remove sidebar shadow */
+}
+
+.btn {
+    background: #ff6f61;
+    /* coral colored button */
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(255, 111, 97, 0.4);
+    transition: background 0.3s ease;
+    align-self: flex-start;
+    /* align button top-left */
+    margin-bottom: 24px;
+}
+
+.btn:hover {
+    background: #ff3b22;
+    /* darker coral on hover */
+    box-shadow: 0 6px 12px rgba(255, 59, 34, 0.6);
+}
+
+
+.modal-content {
+    background: #fffaf0;
+    /* warm light cream */
+    padding: 36px;
+    border-radius: 10px;
+    box-shadow: 0 3px 30px rgba(255, 111, 97, 0.3);
+    min-width: 350px;
+    position: relative;
+    color: #333;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 18px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #ff6f61;
+    font-weight: bold;
+}
+
+label {
+    font-weight: 600;
+    color: #5145cd;
+    /* purple for labels */
+}
+
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 6px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #ff6f61;
+    outline: none;
+}
