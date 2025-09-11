@@ -58,6 +58,11 @@ buildForm.onsubmit = function (event) {
         extrasPrice: parseFloat(formData.get('extrasPrice')) || 0,
     };
 
+    // New fields from form
+    const locationSold = formData.get('locationSold') || '';
+    const dateListed = formData.get('dateListed') || '';
+    const dateSold = formData.get('dateSold') || '';
+
     const sale = parseFloat(formData.get('sale')) || 0;
 
     const totalCost = Object.keys(parts)
@@ -66,7 +71,18 @@ buildForm.onsubmit = function (event) {
 
     const profit = sale - totalCost;
 
-    logs.unshift({ name, parts, totalCost, sale, profit });
+    const newLog = {
+        name,
+        parts,
+        totalCost,
+        sale,
+        profit,
+        locationSold,
+        dateListed,
+        dateSold,
+    };
+
+    logs.unshift(newLog);
 
     localStorage.setItem('logs', JSON.stringify(logs)); // Save logs persistently
 
@@ -101,13 +117,19 @@ function renderLogs() {
             })
             .join('<br>');
 
+        // Add new fields to render
+        const locationSoldHtml = log.locationSold ? `<br><strong>Location Sold:</strong> ${log.locationSold}` : '';
+        const dateListedHtml = log.dateListed ? `<br><strong>Date Listed:</strong> ${log.dateListed}` : '';
+        const dateSoldHtml = log.dateSold ? `<br><strong>Date Sold:</strong> ${log.dateSold}` : '';
+
         el.innerHTML = `
-        <strong>${log.name || 'Unnamed Build'}</strong><br>
-        ${partDetails}<br>
-        <strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}<br>
-        <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
-        <strong>Profit:</strong> $${log.profit.toFixed(2)}
+      <strong>${log.name || 'Unnamed Build'}</strong><br>
+      ${partDetails}${locationSoldHtml}${dateListedHtml}${dateSoldHtml}<br>
+      <strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}<br>
+      <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
+      <strong>Profit:</strong> $${log.profit.toFixed(2)}
     `;
+
         logList.appendChild(el);
     });
 }
