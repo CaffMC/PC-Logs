@@ -5,42 +5,51 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Compact Build Logs</title>
+
+    <nav class="navbar">
+        <ul class="nav-list">
+            <li><a href="home.html" class="nav-link">Home</a></li>
+            <li><a href="index.html" class="nav-link">Add Build</a></li>
+            <li><a href="compact-logs.html" class="nav-link">All Logs</a></li>
+        </ul>
+    </nav>
+
     <style>
+        /* Same styles as before for layout, navbar, buttons, modal, forms, etc. */
+        .navbar {
+            background-color: #ff6f61;
+            padding: 12px 24px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            gap: 24px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f4f8;
             margin: 0;
             padding: 32px;
             color: #333;
-            background-image: url('image.png');
-        }
-
-        h2 {
-            margin-bottom: 24px;
-            color: #ffffff;
-        }
-
-        #backBtn {
-            position: static !important;
-            height: auto !important;
-            width: auto !important;
-            padding: 12px 32px;
-            background-color: #ff6f61;
-            color: white;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            border: none;
-            margin: 10px 0;
-            display: inline-block;
-            white-space: nowrap;
-            line-height: 1;
         }
 
         #compactLogList {
-            width: 100%;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -72,8 +81,28 @@
             margin-left: 20px;
         }
 
-        /* Modal */
-        #modal {
+        #editLogBtn {
+            position: absolute;
+            bottom: 16px;
+            right: 90px;
+            /* horizontally left of Remove button */
+            background: #ff6f61;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #editLogBtn:hover {
+            background-color: #e55a56;
+            /* Optional: slightly darker on hover */
+        }
+
+
+        #modal,
+        #editModal {
             display: none;
             position: fixed;
             inset: 0;
@@ -83,7 +112,7 @@
             z-index: 1000;
         }
 
-        #modalContent {
+        .modal-content {
             background: #fffaf0;
             border-radius: 16px;
             padding: 32px;
@@ -95,7 +124,7 @@
             position: relative;
         }
 
-        #modalClose {
+        .close {
             position: absolute;
             top: 12px;
             right: 12px;
@@ -111,85 +140,234 @@
             bottom: 16px;
             right: 16px;
             background: #ff6f61;
-            color: #fff;
+            color: white;
             border: none;
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
         }
+
+        .btn {
+            background-color: #ff6f61;
+            color: white;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+        }
+
+        .part-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+
+        .part-input,
+        .price-input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 500;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .part-input:focus,
+        .price-input:focus {
+            border-color: #ff6f61;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
+        }
     </style>
 </head>
 
 <body>
-    <h2>All Build Logs (click them to expand)</h2>
+
+    <h2>All Build Logs (click to expand details)</h2>
     <div id="compactLogList"></div>
 
-    <button id="backBtn" class="btn">Back to Main Page</button>
-
-    <div id="modal">
-        <div id="modalContent">
-            <span id="modalClose">&times;</span>
-            <div id="modalDetails"></div>
+    <!-- Details Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h2>Build Log Details</h2>
+            <pre id="modalDetails" style="white-space: pre-wrap; font-family: inherit;"></pre>
             <button id="removeLogBtn">Remove</button>
+            <button id="editLogBtn" style="margin-left: 10px;">Edit</button>
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span id="closeEditModal" class="close">&times;</span>
+            <h2 id="editModalTitle">Edit Build Log</h2>
+            <form id="editForm">
+                <label>PC Name: <input type="text" name="name" /></label>
+
+                <div class="part-row">
+                    <input type="text" name="gpu" placeholder="GPU" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="gpuPrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="cpu" placeholder="CPU" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="cpuPrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="ram" placeholder="RAM" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="ramPrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="motherboard" placeholder="Motherboard" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="motherboardPrice" placeholder="Price"
+                        class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="psu" placeholder="PSU" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="psuPrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="storage" placeholder="Storage" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="storagePrice" placeholder="Price"
+                        class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="psuExt" placeholder="PSU Extensions" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="psuExtPrice" placeholder="Price"
+                        class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="cpuCooler" placeholder="CPU Cooler" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="cpuCoolerPrice" placeholder="Price"
+                        class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="fans" placeholder="Fans" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="fansPrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="case" placeholder="Case" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="casePrice" placeholder="Price" class="price-input" />
+                </div>
+
+                <div class="part-row">
+                    <input type="text" name="extras" placeholder="Extras" class="part-input" />
+                    <input type="number" min="0" step="0.01" name="extrasPrice" placeholder="Price"
+                        class="price-input" />
+                </div>
+
+                <label>Location Sold:
+                    <select name="locationSold">
+                        <option value="local">Local</option>
+                        <option value="online">Online</option>
+                    </select>
+                </label>
+
+                <label>Date Listed:
+                    <input type="date" name="dateListed" />
+                </label>
+
+                <label>Date Sold:
+                    <input type="date" name="dateSold" />
+                </label>
+
+                <label>Sale Price:
+                    <input type="number" min="0" step="0.01" name="sale" />
+                </label>
+
+                <button type="submit" class="btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay" style="display:none;"></div>
+
     <script>
-        let logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
         const compactLogList = document.getElementById('compactLogList');
         const modal = document.getElementById('modal');
         const modalDetails = document.getElementById('modalDetails');
-        const modalClose = document.getElementById('modalClose');
-        const backBtn = document.getElementById('backBtn');
+        const closeModalBtn = document.getElementById('closeModal');
         const removeLogBtn = document.getElementById('removeLogBtn');
+        const editLogBtn = document.getElementById('editLogBtn');
+        const editModal = document.getElementById('editModal');
+        const closeEditModalBtn = document.getElementById('closeEditModal');
+        const editForm = document.getElementById('editForm');
+        const overlay = document.getElementById('overlay');
+
         let currentLogIndex = null;
 
-        // Back button navigation
-        backBtn.onclick = () => {
-            window.location.href = 'index.html'; // Adjust as needed
-        };
-
-        // Utility capitalize function
         function capitalize(str) {
             if (!str) return '';
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
-        // Create modal details HTML with new fields shown
         function createDetailsHTML(log) {
-            const partsHTML = Object.entries(log.parts)
-                .filter(([key, value]) => value && !key.toLowerCase().includes('price'))
-                .map(([key, value]) => {
-                    const price = log.parts[key + 'Price'] || 0;
-                    return `<strong>${capitalize(key)}:</strong> ${value} ($${price.toFixed(2)})`;
-                })
-                .join('<br>');
+            const partsHTML = Object.entries(log.parts).filter(([key, value]) => value && !key.toLowerCase().includes('price'))
+                .map(([key, value]) => `${capitalize(key)}: ${value} ($${(log.parts[key + 'Price'] || 0).toFixed(2)})`)
+                .join('\n');
+            const locationSoldHtml = log.locationSold ? `\nLocation Sold: ${log.locationSold}` : '';
+            const dateListedHtml = log.dateListed ? `\nDate Listed: ${log.dateListed}` : '';
+            const dateSoldHtml = log.dateSold ? `\nDate Sold: ${log.dateSold}` : '';
 
-            const locationSoldHtml = log.locationSold ? `<br><strong>Location Sold:</strong> ${log.locationSold}` : '';
-            const dateListedHtml = log.dateListed ? `<br><strong>Date Listed:</strong> ${log.dateListed}` : '';
-            const dateSoldHtml = log.dateSold ? `<br><strong>Date Sold:</strong> ${log.dateSold}` : '';
-
-            return `
-    <h3>${log.name || 'Unnamed Build'}</h3>
-    ${partsHTML}
-    ${locationSoldHtml}
-    ${dateListedHtml}
-    ${dateSoldHtml}
-    <hr/>
-    <p><strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}</p>
-    <p><strong>Sale Price:</strong> $${log.sale.toFixed(2)}</p>
-    <p><strong>Profit:</strong> $${log.profit.toFixed(2)}</p>
-  `;
+            return `${log.name || 'Unnamed Build'}\n${partsHTML}${locationSoldHtml}${dateListedHtml}${dateSoldHtml}
+        
+Total Cost: $${log.totalCost.toFixed(2)}
+Sale Price: $${log.sale.toFixed(2)}
+Profit: $${log.profit.toFixed(2)}`;
         }
 
-        // Open modal and show details
-        function openModal(log, index) {
+        function renderLogs() {
+            compactLogList.innerHTML = '';
+            if (logs.length === 0) {
+                compactLogList.innerHTML = '<p>No builds logged yet.</p>';
+                return;
+            }
+            logs.forEach((log, index) => {
+                const entry = document.createElement('div');
+                entry.classList.add('compactLogEntry');
+                entry.innerHTML = `<span class="logName">${log.name || 'Unnamed Build'}</span>
+                               <span class="logSummary">Cost: $${log.totalCost.toFixed(2)} | Sale: $${log.sale.toFixed(2)} | Profit: $${log.profit.toFixed(2)}</span>`;
+                entry.onclick = () => openDetailsModal(log, index);
+                compactLogList.appendChild(entry);
+            });
+        }
+
+        function openDetailsModal(log, index) {
             currentLogIndex = index;
-            modalDetails.innerHTML = createDetailsHTML(log);
+            modalDetails.textContent = createDetailsHTML(log);
             modal.style.display = 'flex';
+            overlay.style.display = 'block';
         }
 
-        // Remove log and update list
+        closeModalBtn.onclick = closeModalFunc;
+        overlay.onclick = () => {
+            closeModalFunc();
+            closeEditModalFunc();
+        };
+
+        function closeModalFunc() {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+            modalDetails.textContent = '';
+            currentLogIndex = null;
+        }
+
         removeLogBtn.onclick = () => {
             if (currentLogIndex !== null) {
                 logs.splice(currentLogIndex, 1);
@@ -199,46 +377,76 @@
             }
         };
 
-        // Close modal helper
-        function closeModalFunc() {
-            modal.style.display = 'none';
-            modalDetails.innerHTML = '';
-        }
-
-        modalClose.onclick = closeModalFunc;
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                closeModalFunc();
+        editLogBtn.onclick = () => {
+            if (currentLogIndex !== null) {
+                openEditModal(logs[currentLogIndex], currentLogIndex);
             }
         };
 
-        // Render logs list with clickable entries
-        function renderLogs() {
-            compactLogList.innerHTML = '';
-            if (logs.length === 0) {
-                compactLogList.innerHTML = '<p>No builds logged yet.</p>';
-            } else {
-                logs.forEach((log, index) => {
-                    const entry = document.createElement('div');
-                    entry.classList.add('compactLogEntry');
-                    entry.innerHTML = `
-        <span class="logName">${log.name || 'Unnamed Build'}</span>
-        <span class="logSummary">
-          Cost: $${log.totalCost.toFixed(2)} |
-          Sale: $${log.sale.toFixed(2)} |
-          Profit: $${log.profit.toFixed(2)}
-        </span>
-      `;
-                    entry.onclick = () => openModal(log, index);
-                    compactLogList.appendChild(entry);
-                });
+        function openEditModal(log, index) {
+            editModal.style.display = 'flex';
+            overlay.style.display = 'block';
+
+            editForm.elements['name'].value = log.name || '';
+            for (const key in log.parts) {
+                if (editForm.elements[key]) editForm.elements[key].value = log.parts[key];
             }
+            editForm.elements['locationSold'].value = log.locationSold || '';
+            editForm.elements['dateListed'].value = log.dateListed || '';
+            editForm.elements['dateSold'].value = log.dateSold || '';
+            editForm.elements['sale'].value = log.sale || '';
+            currentLogIndex = index;
         }
 
-        // Initial render
-        renderLogs();
+        closeEditModalBtn.onclick = closeEditModalFunc;
 
+        function closeEditModalFunc() {
+            editModal.style.display = 'none';
+            overlay.style.display = 'none';
+            editForm.reset();
+        }
+
+        editForm.onsubmit = function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(editForm);
+            const partsKeys = ['gpu', 'gpuPrice', 'cpu', 'cpuPrice', 'ram', 'ramPrice', 'motherboard', 'motherboardPrice',
+                'psu', 'psuPrice', 'storage', 'storagePrice', 'psuExt', 'psuExtPrice', 'cpuCooler', 'cpuCoolerPrice',
+                'fans', 'fansPrice', 'case', 'casePrice', 'extras', 'extrasPrice'];
+
+            const parts = {};
+            partsKeys.forEach(key => {
+                if (key.toLowerCase().includes('price')) {
+                    parts[key] = parseFloat(formData.get(key)) || 0;
+                } else {
+                    parts[key] = formData.get(key) || '';
+                }
+            });
+
+            const name = formData.get('name') || '';
+            const locationSold = formData.get('locationSold') || '';
+            const dateListed = formData.get('dateListed') || '';
+            const dateSold = formData.get('dateSold') || '';
+            const sale = parseFloat(formData.get('sale')) || 0;
+
+            const totalCost = Object.keys(parts).filter(k => k.toLowerCase().includes('price'))
+                .reduce((acc, k) => acc + parts[k], 0);
+            const profit = sale - totalCost;
+
+            const updatedLog = { name, parts, totalCost, sale, profit, locationSold, dateListed, dateSold };
+
+            if (currentLogIndex !== null) {
+                logs[currentLogIndex] = updatedLog;
+                localStorage.setItem('logs', JSON.stringify(logs));
+                renderLogs();
+                closeEditModalFunc();
+                closeModalFunc(); // also close detail modal
+            }
+        };
+
+        renderLogs();
     </script>
+
 </body>
 
 </html>

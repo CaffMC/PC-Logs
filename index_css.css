@@ -1,3 +1,4 @@
+/* Reset and base styles */
 body {
     --bg-image: url('white-pc.webp');
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -5,14 +6,26 @@ body {
     color: #333;
     height: 100vh;
     display: flex;
+    flex-direction: column;
+    /* stack navbar above main content */
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
     position: relative;
-    /* needed for ::before */
 }
 
+.logEntry {
+  background-color: white !important;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.027);
+  word-wrap: break-word;
+  color: #333;
+}
+
+/* Background image */
 body::before {
     content: "";
     position: fixed;
@@ -21,35 +34,100 @@ body::before {
     z-index: -1;
 }
 
-/* Sidebar with Buttons */
+/* Navigation bar */
+.navbar {
+    background-color: #ff6f61;
+    padding: 12px 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+/* Nav list */
+.nav-list {
+    list-style: none;
+    display: flex;
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Nav list items */
+.nav-list li {
+    margin: 0;
+}
+
+/* Nav links */
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 18px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
+
+/* Main content container below navbar */
+.main-content {
+    display: flex;
+    flex: 1 1 auto;
+    /* grow and fill available space */
+    margin-top: 56px;
+    /* height of navbar */
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+/* Sidebar */
 .sidebar {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* top and bottom alignment */
     align-items: flex-end;
-    height: 100vh;
-    /* full viewport height */
+    height: 100%;
     padding: 32px;
     box-sizing: border-box;
     position: fixed;
     right: 0;
-    top: 0;
+    top: 56px;
+    /* below navbar */
     width: 200px;
-    /* your sidebar width */
     background: transparent;
     z-index: 10;
+    overflow: auto;
 }
 
+/* Logs Section - fills remaining space */
+.logs {
+    flex: 1 1 auto;
+    padding: 32px;
+    margin: 20px 32px 20px 0;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* Buttons */
 .btn {
-  background-color: #ff6f61;
-  color: white;
-  font-weight: 700;
-  padding: 12px 32px;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  /* and other styling as needed */
+    background-color: #ff6f61;
+    color: white;
+    font-weight: 700;
+    padding: 12px 32px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 #addBtn,
@@ -66,8 +144,6 @@ body::before {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
     user-select: none;
     white-space: nowrap;
-    background-color: #ff6f61;
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -82,31 +158,20 @@ body::before {
     outline: none;
 }
 
-/* Logs Section */
-.logs {
-    flex: 2;
-    padding: 32px;
-    margin: 20px 32px;
-    background: none;
-    box-shadow: none;
-    border-radius: 0;
-    overflow-y: auto;
-    height: 100vh;
+/* Scrollbar for logs */
+.logs::-webkit-scrollbar {
+    width: 10px;
 }
 
-h2 {
-    color: #000;
-    font-size: 200%;
+.logs::-webkit-scrollbar-track {
+    background: #f0f4f8;
+    border-radius: 10px;
 }
 
-.logEntry {
-    background-color: white;
-    padding: 16px 24px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.027);
-    word-wrap: break-word;
-    color: #333;
+.logs::-webkit-scrollbar-thumb {
+    background-color: #5145cd;
+    border-radius: 10px;
+    border: 3px solid #f0f4f8;
 }
 
 /* Modal Overlay */
@@ -167,7 +232,9 @@ label {
 
 /* Text & Number Inputs */
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="date"],
+select {
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 20px;
@@ -181,7 +248,9 @@ input[type="number"] {
 }
 
 input[type="text"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
     border-color: #ff6f61;
     outline: none;
     box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
@@ -213,20 +282,4 @@ input[type="number"]:focus {
     border-color: #ff6f61;
     outline: none;
     box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
-}
-
-/* Scrollbar for logs */
-.logs::-webkit-scrollbar {
-    width: 10px;
-}
-
-.logs::-webkit-scrollbar-track {
-    background: #f0f4f8;
-    border-radius: 10px;
-}
-
-.logs::-webkit-scrollbar-thumb {
-    background-color: #5145cd;
-    border-radius: 10px;
-    border: 3px solid #f0f4f8;
 }

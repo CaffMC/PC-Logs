@@ -16,14 +16,22 @@
 
     <div class="sidebar">
         <button class="btn" id="addBtn">Add Build to Log</button>
-        <button id="moreLogsBtn" class="btn">All Logs</button>
+        <!-- Removed the More Logs button -->
     </div>
+
+    <nav class="navbar">
+        <ul class="nav-list">
+            <li><a href="home.html" class="nav-link">Home</a></li>
+            <li><a href="index.html" class="nav-link">Add Build</a></li>
+            <li><a href="compact-logs.html" class="nav-link">All Logs</a></li>
+        </ul>
+    </nav>
 
     <!-- Modal -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <span class="close" id="closeModal">&times;</span>
-            <h2>Add Build Log</h2>
+            <h2 id="modalTitle">Add Build Log</h2>
             <form id="buildForm">
                 <label>PC Name:
                     <input type="text" name="name" />
@@ -89,7 +97,6 @@
                         class="price-input" />
                 </div>
 
-                <!-- New fields added here -->
                 <label>Location Sold:
                     <select name="locationSold">
                         <option value="local">Local</option>
@@ -109,12 +116,12 @@
                     <input type="number" min="0" step="0.01" name="sale" />
                 </label>
 
-                <button type="submit" class="btn">Add</button>
+                <button type="submit" class="btn" id="submitBtn">Add</button>
             </form>
         </div>
     </div>
 
-    <div class="overlay" id="overlay"></div>
+    <div class="overlay" id="overlay" style="display:none;"></div>
 
     <script src="index_javascript.js"></script>
 </body>
