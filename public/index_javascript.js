@@ -1,5 +1,3 @@
-import { db, collection, getDocs, addDoc } from './firebase-init.js';
-
 const modal = document.getElementById('modal');
 const overlay = document.getElementById('overlay');
 const addBtn = document.getElementById('addBtn');
@@ -8,7 +6,7 @@ const buildForm = document.getElementById('buildForm');
 const logList = document.getElementById('logList');
 const MAX_LOGS_MAIN = 4;
 
-let logs = [];
+let logs = JSON.parse(localStorage.getItem('logs')) || [];
 let currentEditIndex = null;
 
 function capitalize(str) {
@@ -16,7 +14,6 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// Render logs fetched from Firestore
 function renderLogs() {
     logList.innerHTML = '';
     if (logs.length === 0) {
@@ -32,7 +29,7 @@ function renderLogs() {
         el.style.marginBottom = '16px';
         el.style.borderRadius = '5px';
 
-        const partDetails = Object.entries(log.parts || {})
+        const partDetails = Object.entries(log.parts)
             .filter(([key, value]) => value && !key.toLowerCase().includes('price'))
             .map(([key, value]) => {
                 const price = log.parts[key + 'Price'] || 0;
@@ -47,20 +44,13 @@ function renderLogs() {
         el.innerHTML = `
         <strong>${log.name || 'Unnamed Build'}</strong><br>
         ${partDetails}${locationSoldHtml}${dateListedHtml}${dateSoldHtml}<br>
-        <strong>Total Cost:</strong> $${(log.totalCost || 0).toFixed(2)}<br>
-        <strong>Sale Price:</strong> $${(log.sale || 0).toFixed(2)}<br>
-        <strong>Profit:</strong> $${(log.profit || 0).toFixed(2)}
+        <strong>Total Cost:</strong> $${log.totalCost.toFixed(2)}<br>
+        <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
+        <strong>Profit:</strong> $${log.profit.toFixed(2)}
         `;
 
         logList.appendChild(el);
     });
-}
-
-// Fetch all logs from Firestore
-async function fetchLogs() {
-    const snapshot = await getDocs(collection(db, 'logs'));
-    logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderLogs();
 }
 
 addBtn.onclick = () => {
@@ -86,7 +76,7 @@ overlay.onclick = () => {
     currentEditIndex = null;
 };
 
-buildForm.onsubmit = async function (event) {
+buildForm.onsubmit = function (event) {
     event.preventDefault();
 
     const formData = new FormData(buildForm);
@@ -134,14 +124,17 @@ buildForm.onsubmit = async function (event) {
         profit,
         locationSold,
         dateListed,
-        dateSold
+        dateSold,
     };
 
-    // Save new log to Firestore
-    await addDoc(collection(db, 'logs'), newLog);
+    if (currentEditIndex !== null) {
+        logs[currentEditIndex] = newLog;
+    } else {
+        logs.unshift(newLog);
+    }
 
-    // Refresh logs from Firestore
-    await fetchLogs();
+    localStorage.setItem('logs', JSON.stringify(logs));
+    renderLogs();
 
     modal.style.display = 'none';
     overlay.style.display = 'none';
@@ -150,5 +143,4 @@ buildForm.onsubmit = async function (event) {
     currentEditIndex = null;
 };
 
-// Initial fetch of logs on page load
-fetchLogs();
+renderLogs();
