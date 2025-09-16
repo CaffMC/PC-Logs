@@ -230,6 +230,78 @@ label {
     font-size: 16px;
 }
 
+/* -------- Firebase Authentication UI -------- */
+
+.auth-container {
+    background-color: #fff;
+    padding: 20px 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(255, 111, 97, 0.35);
+    /* aligns with modal shadow */
+    max-width: 320px;
+    margin: 16px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #5145cd;
+    /* align text color with your label color */
+}
+
+.auth-container label {
+    font-weight: 700;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.auth-container input[type="email"],
+.auth-container input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    font-size: 16px;
+    font-weight: 400;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: text;
+    margin-bottom: 14px;
+}
+
+.auth-container input[type="email"]:focus,
+.auth-container input[type="password"]:focus {
+    border-color: #ff6f61;
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 111, 97, 0.6);
+}
+
+.auth-container button {
+    width: 100%;
+    background-color: #ff6f61;
+    color: white;
+    font-weight: 700;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 10px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.auth-container button:hover,
+.auth-container button:focus {
+    background-color: #e65b4f;
+    outline: none;
+}
+
+#userInfo {
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 12px;
+    text-align: center;
+    color: #333;
+}
+
+
 /* Text & Number Inputs */
 input[type="text"],
 input[type="number"],

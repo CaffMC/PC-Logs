@@ -2,9 +2,12 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>PC Build Logs</title>
+
     <link rel="stylesheet" href="index_css.css" />
 </head>
 
@@ -13,19 +16,41 @@
         <h2>Build Logs</h2>
         <div id="logList"></div>
     </div>
-
     <div class="sidebar">
         <button class="btn" id="addBtn">Add Build to Log</button>
         <!-- Removed the More Logs button -->
     </div>
-
     <nav class="navbar">
         <ul class="nav-list">
             <li><a href="home.html" class="nav-link">Home</a></li>
             <li><a href="index.html" class="nav-link">Add Build</a></li>
             <li><a href="compact-logs.html" class="nav-link">All Logs</a></li>
         </ul>
+        <button id="openAuthPopup" class="btn">Sign In / Register</button>
     </nav>
+
+    <!-- Authentication Modal -->
+    <div class="modal" id="authPopup" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="authClose">&times;</span>
+            <h2>Sign In / Sign Up</h2>
+
+            <label for="emailAuth">Email</label>
+            <input type="email" id="emailAuth" placeholder="Email" />
+
+            <label for="passwordAuth">Password</label>
+            <input type="password" id="passwordAuth" placeholder="Password" />
+
+            <button id="authSignUpBtn">Sign Up</button>
+            <button id="authSignInBtn">Sign In</button>
+            <button id="authGoogleBtn">Sign in with Google</button>
+            <button id="authSignOutBtn" style="display:none;">Sign Out</button>
+
+            <div id="authUserInfo"></div>
+        </div>
+    </div>
+
+
 
     <!-- Modal -->
     <div class="modal" id="modal">
@@ -36,94 +61,85 @@
                 <label>PC Name:
                     <input type="text" name="name" />
                 </label>
-
                 <div class="part-row">
                     <input type="text" name="gpu" placeholder="GPU" class="part-input" />
                     <input type="number" min="0" step="0.01" name="gpuPrice" placeholder="Price" class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="cpu" placeholder="CPU" class="part-input" />
                     <input type="number" min="0" step="0.01" name="cpuPrice" placeholder="Price" class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="ram" placeholder="RAM" class="part-input" />
                     <input type="number" min="0" step="0.01" name="ramPrice" placeholder="Price" class="price-input" />
-                </div>
 
+                </div>
                 <div class="part-row">
                     <input type="text" name="motherboard" placeholder="Motherboard" class="part-input" />
                     <input type="number" min="0" step="0.01" name="motherboardPrice" placeholder="Price"
                         class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="psu" placeholder="PSU" class="part-input" />
                     <input type="number" min="0" step="0.01" name="psuPrice" placeholder="Price" class="price-input" />
-                </div>
 
+                </div>
                 <div class="part-row">
                     <input type="text" name="storage" placeholder="Storage" class="part-input" />
                     <input type="number" min="0" step="0.01" name="storagePrice" placeholder="Price"
                         class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="psuExt" placeholder="PSU Extensions" class="part-input" />
                     <input type="number" min="0" step="0.01" name="psuExtPrice" placeholder="Price"
                         class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="cpuCooler" placeholder="CPU Cooler" class="part-input" />
                     <input type="number" min="0" step="0.01" name="cpuCoolerPrice" placeholder="Price"
                         class="price-input" />
-                </div>
 
+                </div>
                 <div class="part-row">
                     <input type="text" name="fans" placeholder="Fans" class="part-input" />
                     <input type="number" min="0" step="0.01" name="fansPrice" placeholder="Price" class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="case" placeholder="Case" class="part-input" />
                     <input type="number" min="0" step="0.01" name="casePrice" placeholder="Price" class="price-input" />
                 </div>
-
                 <div class="part-row">
                     <input type="text" name="extras" placeholder="Extras" class="part-input" />
                     <input type="number" min="0" step="0.01" name="extrasPrice" placeholder="Price"
                         class="price-input" />
                 </div>
-
                 <label>Location Sold:
                     <select name="locationSold">
                         <option value="local">Local</option>
                         <option value="online">Online</option>
                     </select>
                 </label>
-
                 <label>Date Listed:
                     <input type="date" name="dateListed" />
                 </label>
-
                 <label>Date Sold:
                     <input type="date" name="dateSold" />
                 </label>
-
                 <label>Sale Price:
                     <input type="number" min="0" step="0.01" name="sale" />
                 </label>
-
                 <button type="submit" class="btn" id="submitBtn">Add</button>
-            </form>
-        </div>
-    </div>
 
+            </form>
+
+        </div>
+
+    </div>
     <div class="overlay" id="overlay" style="display:none;"></div>
 
-    <script src="index_javascript.js"></script>
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="index_javascript.js"></script>
+
 </body>
 
 </html>

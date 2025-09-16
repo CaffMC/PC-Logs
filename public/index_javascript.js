@@ -1,3 +1,7 @@
+import { auth, db, googleProvider } from './firebase-init.js';
+import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
 const modal = document.getElementById('modal');
 const overlay = document.getElementById('overlay');
 const addBtn = document.getElementById('addBtn');
@@ -5,8 +9,7 @@ const closeModalBtn = document.getElementById('closeModal');
 const buildForm = document.getElementById('buildForm');
 const logList = document.getElementById('logList');
 const MAX_LOGS_MAIN = 4;
-
-let logs = JSON.parse(localStorage.getItem('logs')) || [];
+let logs = [];
 let currentEditIndex = null;
 
 function capitalize(str) {
@@ -28,7 +31,6 @@ function renderLogs() {
         el.style.padding = '12px';
         el.style.marginBottom = '16px';
         el.style.borderRadius = '5px';
-
         const partDetails = Object.entries(log.parts)
             .filter(([key, value]) => value && !key.toLowerCase().includes('price'))
             .map(([key, value]) => {
@@ -36,11 +38,9 @@ function renderLogs() {
                 return `<strong>${capitalize(key)}:</strong> ${value} ($${price.toFixed(2)})`;
             })
             .join('<br>');
-
         const locationSoldHtml = log.locationSold ? `<br><strong>Location Sold:</strong> ${log.locationSold}` : '';
         const dateListedHtml = log.dateListed ? `<br><strong>Date Listed:</strong> ${log.dateListed}` : '';
         const dateSoldHtml = log.dateSold ? `<br><strong>Date Sold:</strong> ${log.dateSold}` : '';
-
         el.innerHTML = `
         <strong>${log.name || 'Unnamed Build'}</strong><br>
         ${partDetails}${locationSoldHtml}${dateListedHtml}${dateSoldHtml}<br>
@@ -48,36 +48,40 @@ function renderLogs() {
         <strong>Sale Price:</strong> $${log.sale.toFixed(2)}<br>
         <strong>Profit:</strong> $${log.profit.toFixed(2)}
         `;
-
         logList.appendChild(el);
     });
 }
 
-addBtn.onclick = () => {
+addBtn.addEventListener('click', () => {
     currentEditIndex = null;
     modal.style.display = 'flex';
     overlay.style.display = 'block';
     buildForm.reset();
     document.getElementById('modalTitle').textContent = "Add Build Log";
     document.getElementById('submitBtn').textContent = "Add";
-};
+});
 
-closeModalBtn.onclick = () => {
+closeModalBtn.addEventListener('click', () => {
     modal.style.display = 'none';
     overlay.style.display = 'none';
     buildForm.reset();
     currentEditIndex = null;
-};
+});
 
-overlay.onclick = () => {
+overlay.addEventListener('click', () => {
     modal.style.display = 'none';
     overlay.style.display = 'none';
     buildForm.reset();
     currentEditIndex = null;
-};
+});
 
-buildForm.onsubmit = function (event) {
+buildForm.onsubmit = async function (event) {
     event.preventDefault();
+
+    if (!auth.currentUser) {
+        alert('Please sign in to save your build logs.');
+        return;
+    }
 
     const formData = new FormData(buildForm);
     const parts = {
@@ -104,19 +108,16 @@ buildForm.onsubmit = function (event) {
         extras: formData.get('extras') || '',
         extrasPrice: parseFloat(formData.get('extrasPrice')) || 0,
     };
-
     const locationSold = formData.get('locationSold') || '';
     const dateListed = formData.get('dateListed') || '';
     const dateSold = formData.get('dateSold') || '';
     const sale = parseFloat(formData.get('sale')) || 0;
-
     const totalCost = Object.keys(parts)
         .filter(k => k.toLowerCase().includes('price'))
         .reduce((acc, k) => acc + parts[k], 0);
-
     const profit = sale - totalCost;
-
     const newLog = {
+        userId: auth.currentUser.uid,
         name: formData.get('name') || '',
         parts,
         totalCost,
@@ -125,22 +126,160 @@ buildForm.onsubmit = function (event) {
         locationSold,
         dateListed,
         dateSold,
+        timestamp: new Date(),
     };
 
-    if (currentEditIndex !== null) {
-        logs[currentEditIndex] = newLog;
-    } else {
-        logs.unshift(newLog);
+    try {
+        if (currentEditIndex !== null && logs[currentEditIndex]?.id) {
+            // Update existing log in Firestore
+            // (Implement updateDoc if you want; omitted here for simplicity)
+            alert("Editing existing logs is not implemented yet.");
+        } else {
+            await addDoc(collection(db, "buildLogs"), newLog);
+        }
+        alert("Build log saved successfully!");
+        buildForm.reset();
+        modal.style.display = 'none';
+        overlay.style.display = 'none';
+        currentEditIndex = null;
+        await loadLogs();
+    } catch (error) {
+        alert("Failed to save log: " + error.message);
     }
-
-    localStorage.setItem('logs', JSON.stringify(logs));
-    renderLogs();
-
-    modal.style.display = 'none';
-    overlay.style.display = 'none';
-
-    buildForm.reset();
-    currentEditIndex = null;
 };
 
-renderLogs();
+async function loadLogs() {
+    if (!auth.currentUser) {
+        logList.innerHTML = "<p>Please sign in to see your logs.</p>";
+        return;
+    }
+    const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    logs = [];
+    querySnapshot.forEach(doc => {
+        logs.push({ id: doc.id, ...doc.data() });
+    });
+    renderLogs();
+}
+
+// ---- Authentication Popup Modal Additions ----
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Authentication modal elements
+    const authModal = document.getElementById('authPopup');
+    const authClose = document.getElementById('authClose');
+    const openAuthBtn = document.getElementById('openAuthPopup');
+
+    const googleSignInBtn = document.getElementById('authGoogleBtn');
+    const signOutBtn = document.getElementById('authSignOutBtn');
+    const userInfo = document.getElementById('authUserInfo');
+    const emailInput = document.getElementById('emailAuth');
+    const passwordInput = document.getElementById('passwordAuth');
+    const signUpBtn = document.getElementById('authSignUpBtn');
+    const signInBtn = document.getElementById('authSignInBtn');
+
+    // Open Authentication modal popup
+    openAuthBtn.addEventListener('click', () => {
+        authModal.style.display = 'flex';
+    });
+
+    // Close Authentication modal popup
+    authClose.addEventListener('click', () => {
+        authModal.style.display = 'none';
+    });
+
+    // Close modal on outside click
+    window.addEventListener('click', (event) => {
+        if (event.target === authModal) {
+            authModal.style.display = 'none';
+        }
+    });
+
+    // Google sign-in
+    googleSignInBtn.addEventListener('click', async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            userInfo.textContent = `Signed in as ${result.user.email}`;
+            updateUI(true);
+            authModal.style.display = 'none';
+            await loadLogs();
+        } catch (error) {
+            alert('Google sign-in failed: ' + error.message);
+        }
+    });
+
+    // Sign out
+    signOutBtn.addEventListener('click', async () => {
+        await signOut(auth);
+        userInfo.textContent = '';
+        updateUI(false);
+        logList.innerHTML = "<p>Please sign in to view logs.</p>";
+    });
+
+    // Sign up with email/password
+    signUpBtn.addEventListener('click', async () => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        if (!email || !password) {
+            alert('Please enter email and password.');
+            return;
+        }
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            userInfo.textContent = `Signed up as ${userCredential.user.email}`;
+            updateUI(true);
+            authModal.style.display = 'none';
+            await loadLogs();
+        } catch (error) {
+            alert('Sign up failed: ' + error.message);
+        }
+    });
+
+    // Sign in with email/password
+    signInBtn.addEventListener('click', async () => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        if (!email || !password) {
+            alert('Please enter email and password.');
+            return;
+        }
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            userInfo.textContent = `Signed in as ${userCredential.user.email}`;
+            updateUI(true);
+            authModal.style.display = 'none';
+            await loadLogs();
+        } catch (error) {
+            alert('Sign in failed: ' + error.message);
+        }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        updateUI(!!user);
+        if (user) {
+            userInfo.textContent = `Signed in as ${user.email}`;
+            loadLogs();
+        } else {
+            userInfo.textContent = '';
+            logList.innerHTML = "<p>Please sign in to view logs.</p>";
+        }
+    });
+
+    function updateUI(signedIn) {
+        emailInput.style.display = signedIn ? 'none' : 'block';
+        passwordInput.style.display = signedIn ? 'none' : 'block';
+        signUpBtn.style.display = signedIn ? 'none' : 'block';
+        signInBtn.style.display = signedIn ? 'none' : 'block';
+        googleSignInBtn.style.display = signedIn ? 'none' : 'block';
+        signOutBtn.style.display = signedIn ? 'block' : 'none';
+
+        addBtn.disabled = !signedIn;
+    }
+});
+
+// Automatically load logs if user already signed in and page refreshes
+if (auth.currentUser) {
+    loadLogs();
+} else {
+    logList.innerHTML = "<p>Please sign in to view logs.</p>";
+}
