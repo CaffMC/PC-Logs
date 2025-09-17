@@ -77,12 +77,10 @@ overlay.addEventListener('click', () => {
 
 buildForm.onsubmit = async function (event) {
     event.preventDefault();
-
     if (!auth.currentUser) {
         alert('Please sign in to save your build logs.');
         return;
     }
-
     const formData = new FormData(buildForm);
     const parts = {
         gpu: formData.get('gpu') || '',
@@ -131,8 +129,6 @@ buildForm.onsubmit = async function (event) {
 
     try {
         if (currentEditIndex !== null && logs[currentEditIndex]?.id) {
-            // Update existing log in Firestore
-            // (Implement updateDoc if you want; omitted here for simplicity)
             alert("Editing existing logs is not implemented yet.");
         } else {
             await addDoc(collection(db, "buildLogs"), newLog);
@@ -142,7 +138,7 @@ buildForm.onsubmit = async function (event) {
         modal.style.display = 'none';
         overlay.style.display = 'none';
         currentEditIndex = null;
-        await loadLogs();
+        // Don't call loadLogs here! onAuthStateChanged will handle it.
     } catch (error) {
         alert("Failed to save log: " + error.message);
     }
@@ -153,19 +149,22 @@ async function loadLogs() {
         logList.innerHTML = "<p>Please sign in to see your logs.</p>";
         return;
     }
-    const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
-    const querySnapshot = await getDocs(q);
-    logs = [];
-    querySnapshot.forEach(doc => {
-        logs.push({ id: doc.id, ...doc.data() });
-    });
-    renderLogs();
+    try {
+        const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        logs = [];
+        querySnapshot.forEach(doc => {
+            logs.push({ id: doc.id, ...doc.data() });
+        });
+        renderLogs();
+    } catch (error) {
+        logList.innerHTML = `<p>Error loading logs: ${error.message}</p>`;
+    }
 }
 
 // ---- Authentication Popup Modal Additions ----
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Authentication modal elements
     const authModal = document.getElementById('authPopup');
     const authClose = document.getElementById('authClose');
     const openAuthBtn = document.getElementById('openAuthPopup');
@@ -178,37 +177,32 @@ window.addEventListener('DOMContentLoaded', () => {
     const signUpBtn = document.getElementById('authSignUpBtn');
     const signInBtn = document.getElementById('authSignInBtn');
 
-    // Open Authentication modal popup
     openAuthBtn.addEventListener('click', () => {
         authModal.style.display = 'flex';
     });
 
-    // Close Authentication modal popup
     authClose.addEventListener('click', () => {
         authModal.style.display = 'none';
     });
 
-    // Close modal on outside click
     window.addEventListener('click', (event) => {
         if (event.target === authModal) {
             authModal.style.display = 'none';
         }
     });
 
-    // Google sign-in
     googleSignInBtn.addEventListener('click', async () => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
             userInfo.textContent = `Signed in as ${result.user.email}`;
             updateUI(true);
             authModal.style.display = 'none';
-            await loadLogs();
+            // No direct loadLogs call!
         } catch (error) {
             alert('Google sign-in failed: ' + error.message);
         }
     });
 
-    // Sign out
     signOutBtn.addEventListener('click', async () => {
         await signOut(auth);
         userInfo.textContent = '';
@@ -216,7 +210,6 @@ window.addEventListener('DOMContentLoaded', () => {
         logList.innerHTML = "<p>Please sign in to view logs.</p>";
     });
 
-    // Sign up with email/password
     signUpBtn.addEventListener('click', async () => {
         const email = emailInput.value;
         const password = passwordInput.value;
@@ -229,13 +222,11 @@ window.addEventListener('DOMContentLoaded', () => {
             userInfo.textContent = `Signed up as ${userCredential.user.email}`;
             updateUI(true);
             authModal.style.display = 'none';
-            await loadLogs();
         } catch (error) {
             alert('Sign up failed: ' + error.message);
         }
     });
 
-    // Sign in with email/password
     signInBtn.addEventListener('click', async () => {
         const email = emailInput.value;
         const password = passwordInput.value;
@@ -248,12 +239,12 @@ window.addEventListener('DOMContentLoaded', () => {
             userInfo.textContent = `Signed in as ${userCredential.user.email}`;
             updateUI(true);
             authModal.style.display = 'none';
-            await loadLogs();
         } catch (error) {
             alert('Sign in failed: ' + error.message);
         }
     });
 
+    // SINGLE AUTH STATE HANDLER FOR ALL LOGIC:
     onAuthStateChanged(auth, (user) => {
         updateUI(!!user);
         if (user) {
@@ -272,14 +263,13 @@ window.addEventListener('DOMContentLoaded', () => {
         signInBtn.style.display = signedIn ? 'none' : 'block';
         googleSignInBtn.style.display = signedIn ? 'none' : 'block';
         signOutBtn.style.display = signedIn ? 'block' : 'none';
-
         addBtn.disabled = !signedIn;
     }
 });
 
-// Automatically load logs if user already signed in and page refreshes
-if (auth.currentUser) {
-    loadLogs();
-} else {
-    logList.innerHTML = "<p>Please sign in to view logs.</p>";
-}
+// REMOVE this block; use only onAuthStateChanged for auth state/UI logic
+// if (auth.currentUser) {
+//     loadLogs();
+// } else {
+//     logList.innerHTML = "<p>Please sign in to view logs.</p>";
+// }
