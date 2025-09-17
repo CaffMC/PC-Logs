@@ -297,8 +297,11 @@
 
     <div id="overlay" class="overlay" style="display:none;"></div>
 
-    <script>
-        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+    <script type="module">
+        import { auth, db } from './firebase-init.js';
+        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
         const compactLogList = document.getElementById('compactLogList');
         const modal = document.getElementById('modal');
         const modalDetails = document.getElementById('modalDetails');
@@ -310,6 +313,7 @@
         const editForm = document.getElementById('editForm');
         const overlay = document.getElementById('overlay');
 
+        let logs = [];
         let currentLogIndex = null;
 
         function capitalize(str) {
@@ -326,7 +330,7 @@
             const dateSoldHtml = log.dateSold ? `\nDate Sold: ${log.dateSold}` : '';
 
             return `${log.name || 'Unnamed Build'}\n${partsHTML}${locationSoldHtml}${dateListedHtml}${dateSoldHtml}
-        
+
 Total Cost: $${log.totalCost.toFixed(2)}
 Sale Price: $${log.sale.toFixed(2)}
 Profit: $${log.profit.toFixed(2)}`;
@@ -342,10 +346,28 @@ Profit: $${log.profit.toFixed(2)}`;
                 const entry = document.createElement('div');
                 entry.classList.add('compactLogEntry');
                 entry.innerHTML = `<span class="logName">${log.name || 'Unnamed Build'}</span>
-                               <span class="logSummary">Cost: $${log.totalCost.toFixed(2)} | Sale: $${log.sale.toFixed(2)} | Profit: $${log.profit.toFixed(2)}</span>`;
+                           <span class="logSummary">Cost: $${log.totalCost.toFixed(2)} | Sale: $${log.sale.toFixed(2)} | Profit: $${log.profit.toFixed(2)}</span>`;
                 entry.onclick = () => openDetailsModal(log, index);
                 compactLogList.appendChild(entry);
             });
+        }
+
+        async function loadLogsFromFirestore() {
+            if (!auth.currentUser) {
+                compactLogList.innerHTML = "<p>Please sign in to view your logs.</p>";
+                return;
+            }
+            try {
+                const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+                const querySnapshot = await getDocs(q);
+                logs = [];
+                querySnapshot.forEach(doc => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                renderLogs();
+            } catch (error) {
+                compactLogList.innerHTML = `<p>Error loading logs: ${error.message}</p>`;
+            }
         }
 
         function openDetailsModal(log, index) {
@@ -355,25 +377,34 @@ Profit: $${log.profit.toFixed(2)}`;
             overlay.style.display = 'block';
         }
 
-        closeModalBtn.onclick = closeModalFunc;
-        overlay.onclick = () => {
-            closeModalFunc();
-            closeEditModalFunc();
-        };
-
-        function closeModalFunc() {
+        closeModalBtn.onclick = () => {
             modal.style.display = 'none';
             overlay.style.display = 'none';
             modalDetails.textContent = '';
             currentLogIndex = null;
-        }
+        };
 
-        removeLogBtn.onclick = () => {
+        overlay.onclick = () => {
+            modal.style.display = 'none';
+            editModal.style.display = 'none';
+            overlay.style.display = 'none';
+            modalDetails.textContent = '';
+            currentLogIndex = null;
+        };
+
+        removeLogBtn.onclick = async () => {
             if (currentLogIndex !== null) {
-                logs.splice(currentLogIndex, 1);
-                localStorage.setItem('logs', JSON.stringify(logs));
-                closeModalFunc();
-                renderLogs();
+                try {
+                    // Delete from Firestore
+                    const docId = logs[currentLogIndex].id;
+                    await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js")
+                        .then(({ doc, deleteDoc }) => deleteDoc(doc(db, "buildLogs", docId)));
+                    logs.splice(currentLogIndex, 1);
+                    renderLogs();
+                    closeModalBtn.onclick();
+                } catch (error) {
+                    alert('Failed to remove log: ' + error.message);
+                }
             }
         };
 
@@ -398,15 +429,13 @@ Profit: $${log.profit.toFixed(2)}`;
             currentLogIndex = index;
         }
 
-        closeEditModalBtn.onclick = closeEditModalFunc;
-
-        function closeEditModalFunc() {
+        closeEditModalBtn.onclick = () => {
             editModal.style.display = 'none';
             overlay.style.display = 'none';
             editForm.reset();
-        }
+        };
 
-        editForm.onsubmit = function (e) {
+        editForm.onsubmit = async function (e) {
             e.preventDefault();
 
             const formData = new FormData(editForm);
@@ -436,15 +465,34 @@ Profit: $${log.profit.toFixed(2)}`;
             const updatedLog = { name, parts, totalCost, sale, profit, locationSold, dateListed, dateSold };
 
             if (currentLogIndex !== null) {
-                logs[currentLogIndex] = updatedLog;
-                localStorage.setItem('logs', JSON.stringify(logs));
-                renderLogs();
-                closeEditModalFunc();
-                closeModalFunc(); // also close detail modal
+                try {
+                    // Update Firestore document
+                    const docId = logs[currentLogIndex].id;
+                    await import("https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js")
+                        .then(({ doc, updateDoc }) => updateDoc(doc(db, "buildLogs", docId), updatedLog));
+
+                    logs[currentLogIndex] = { ...logs[currentLogIndex], ...updatedLog };
+                    renderLogs();
+                    closeEditModalBtn.onclick();
+                    closeModalBtn.onclick();
+                } catch (error) {
+                    alert('Failed to update log: ' + error.message);
+                }
             }
         };
 
-        renderLogs();
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loadLogsFromFirestore();
+            } else {
+                compactLogList.innerHTML = "<p>Please sign in to view your logs.</p>";
+                logs = [];
+            }
+        });
+
+        // Initial render while waiting for auth
+        compactLogList.innerHTML = "<p>Loading logs...</p>";
+
     </script>
 
 </body>
