@@ -161,38 +161,87 @@
         </div>
         <button class="add-btn" id="addBtn">Add New Build</button>
     </div>
-    <script>
-        // Example: read from localStorage logs
-        let logs = JSON.parse(localStorage.getItem('logs')) || [];
-        let totalRevenue = 0;
-        let totalProfit = 0;
-        logs.forEach(log => {
-            totalRevenue += (log.sale || 0);
-            totalProfit += (log.profit || 0);
-        });
-        document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toFixed(2);
-        document.getElementById('totalProfit').textContent = '$' + totalProfit.toFixed(2);
+    <script type="module">
+        import { auth, db } from './firebase-init.js';
+        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-        // Show last four sales
-        const saleList = document.getElementById('saleList');
-        if (logs.length === 0) {
-            document.getElementById('emptyMsg').style.display = 'block';
-        } else {
-            logs.filter(log => log.sale && log.sale > 0).slice(0, 4).forEach(log => {
-                const li = document.createElement('li');
-                li.className = 'sale-item';
-                li.innerHTML = `
-          <strong>${log.name || 'Unnamed Build'}</strong>: 
-          <span style="color:#ff6f61">$${log.profit.toFixed(2)}</span> profit 
-          <span style="color:#555">(${log.locationSold || 'N/A'}, ${log.dateSold || 'N/A'})</span>
-        `;
-                saleList.appendChild(li);
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const totalProfitEl = document.getElementById('totalProfit');
+        const saleListEl = document.getElementById('saleList');
+        const emptyMsgEl = document.getElementById('emptyMsg');
+        const addBtn = document.getElementById('addBtn');
+
+        let logs = [];
+
+        function renderDashboard() {
+            let totalRevenue = 0;
+            let totalProfit = 0;
+
+            logs.forEach(log => {
+                totalRevenue += (log.sale || 0);
+                totalProfit += (log.profit || 0);
             });
+
+            totalRevenueEl.textContent = '$' + totalRevenue.toFixed(2);
+            totalProfitEl.textContent = '$' + totalProfit.toFixed(2);
+
+            saleListEl.innerHTML = '';
+            if (logs.length === 0 || !logs.some(log => log.sale > 0)) {
+                emptyMsgEl.style.display = 'block';
+            } else {
+                emptyMsgEl.style.display = 'none';
+                logs.filter(log => log.sale && log.sale > 0).slice(0, 4).forEach(log => {
+                    const li = document.createElement('li');
+                    li.className = 'sale-item';
+                    li.innerHTML = `
+        <strong>${log.name || 'Unnamed Build'}</strong>: 
+        <span style="color:#ff6f61">$${log.profit.toFixed(2)}</span> profit 
+        <span style="color:#555">(${log.locationSold || 'N/A'}, ${log.dateSold || 'N/A'})</span>`;
+                    saleListEl.appendChild(li);
+                });
+            }
         }
-        // Nav logic for add button
-        document.getElementById('addBtn').onclick = () => {
+
+        async function loadLogsFromFirestore() {
+            if (!auth.currentUser) {
+                totalRevenueEl.textContent = '$0.00';
+                totalProfitEl.textContent = '$0.00';
+                saleListEl.innerHTML = '';
+                emptyMsgEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+                const querySnapshot = await getDocs(q);
+                logs = [];
+                querySnapshot.forEach(doc => {
+                    logs.push(doc.data());
+                });
+                renderDashboard();
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                totalRevenueEl.textContent = '$0.00';
+                totalProfitEl.textContent = '$0.00';
+                saleListEl.innerHTML = '<li class="empty-msg">Error loading sales data.</li>';
+                emptyMsgEl.style.display = 'none';
+            }
+        }
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loadLogsFromFirestore();
+            } else {
+                logs = [];
+                renderDashboard();
+            }
+        });
+
+        addBtn.onclick = () => {
             window.location.href = "index.html";
         };
+
     </script>
 </body>
 
