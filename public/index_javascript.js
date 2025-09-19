@@ -153,7 +153,7 @@ function subscribeToLogs() {
     const q = query(
         collection(db, "buildLogs"),
         where("userId", "==", auth.currentUser.uid),
-        orderBy("timestamp", "desc")  // order newest first
+        orderBy("timestamp", "asc")  // order newest first
     );
     onSnapshot(q, (querySnapshot) => {
         logs = [];
