@@ -1,5 +1,5 @@
 import { auth, db, googleProvider } from './firebase-init.js';
-import { collection, addDoc, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { collection, addDoc, query, where, getDocs, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 const modal = document.getElementById('modal');
@@ -150,7 +150,11 @@ function subscribeToLogs() {
         logList.innerHTML = "<p>Please sign in to see your logs.</p>";
         return;
     }
-    const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+    const q = query(
+        collection(db, "buildLogs"),
+        where("userId", "==", auth.currentUser.uid),
+        orderBy("timestamp", "desc")  // order newest first
+    );
     onSnapshot(q, (querySnapshot) => {
         logs = [];
         querySnapshot.forEach(doc => {
