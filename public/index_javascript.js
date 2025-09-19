@@ -1,5 +1,5 @@
 import { auth, db, googleProvider } from './firebase-init.js';
-import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { collection, addDoc, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 const modal = document.getElementById('modal');
@@ -138,31 +138,31 @@ buildForm.onsubmit = async function (event) {
         modal.style.display = 'none';
         overlay.style.display = 'none';
         currentEditIndex = null;
-        // Don't call loadLogs here! onAuthStateChanged will handle it.
+        // No direct loadLogs call! onAuthStateChanged will handle it now.
     } catch (error) {
         alert("Failed to save log: " + error.message);
     }
 };
 
-async function loadLogs() {
+// Realtime listener subscription instead of loadLogs
+function subscribeToLogs() {
     if (!auth.currentUser) {
         logList.innerHTML = "<p>Please sign in to see your logs.</p>";
         return;
     }
-    try {
-        const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
-        const querySnapshot = await getDocs(q);
+    const q = query(collection(db, "buildLogs"), where("userId", "==", auth.currentUser.uid));
+    onSnapshot(q, (querySnapshot) => {
         logs = [];
         querySnapshot.forEach(doc => {
             logs.push({ id: doc.id, ...doc.data() });
         });
         renderLogs();
-    } catch (error) {
+    }, (error) => {
         logList.innerHTML = `<p>Error loading logs: ${error.message}</p>`;
-    }
+    });
 }
 
-// ---- Authentication Popup Modal Additions ----
+// Authentication Popup Modal Additions
 
 window.addEventListener('DOMContentLoaded', () => {
     const authModal = document.getElementById('authPopup');
@@ -197,7 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
             userInfo.textContent = `Signed in as ${result.user.email}`;
             updateUI(true);
             authModal.style.display = 'none';
-            // No direct loadLogs call!
+            // Realtime subscription will update logs automatically
         } catch (error) {
             alert('Google sign-in failed: ' + error.message);
         }
@@ -208,6 +208,8 @@ window.addEventListener('DOMContentLoaded', () => {
         userInfo.textContent = '';
         updateUI(false);
         logList.innerHTML = "<p>Please sign in to view logs.</p>";
+        logs = [];
+        renderLogs();
     });
 
     signUpBtn.addEventListener('click', async () => {
@@ -244,15 +246,17 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // SINGLE AUTH STATE HANDLER FOR ALL LOGIC:
+    // Use realtime listener for logs inside auth state change handler
     onAuthStateChanged(auth, (user) => {
         updateUI(!!user);
         if (user) {
             userInfo.textContent = `Signed in as ${user.email}`;
-            loadLogs();
+            subscribeToLogs();
         } else {
             userInfo.textContent = '';
             logList.innerHTML = "<p>Please sign in to view logs.</p>";
+            logs = [];
+            renderLogs();
         }
     });
 
@@ -266,10 +270,3 @@ window.addEventListener('DOMContentLoaded', () => {
         addBtn.disabled = !signedIn;
     }
 });
-
-// REMOVE this block; use only onAuthStateChanged for auth state/UI logic
-// if (auth.currentUser) {
-//     loadLogs();
-// } else {
-//     logList.innerHTML = "<p>Please sign in to view logs.</p>";
-// }
