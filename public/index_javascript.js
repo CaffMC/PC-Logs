@@ -1,5 +1,5 @@
 import { auth, db, googleProvider } from './firebase-init.js';
-import { collection, addDoc, query, where, getDocs, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { collection, addDoc, query, where, getDocs, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 import { signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 const modal = document.getElementById('modal');
@@ -124,7 +124,7 @@ buildForm.onsubmit = async function (event) {
         locationSold,
         dateListed,
         dateSold,
-        timestamp: new Date(),
+        timestamp: serverTimestamp(), // <---- Use Firestore server timestamp
     };
 
     try {
@@ -153,7 +153,7 @@ function subscribeToLogs() {
     const q = query(
         collection(db, "buildLogs"),
         where("userId", "==", auth.currentUser.uid),
-        orderBy("timestamp", "asc")  // order newest first
+        orderBy("timestamp", "desc")  // order newest first
     );
     onSnapshot(q, (querySnapshot) => {
         logs = [];
