@@ -158,12 +158,18 @@ function subscribeToLogs() {
     onSnapshot(q, (querySnapshot) => {
         logs = [];
         querySnapshot.forEach(doc => {
-            logs.push({ id: doc.id, ...doc.data() });
+            const log = { id: doc.id, ...doc.data() };
+            if (log.timestamp) {  // only add logs with valid timestamp
+                logs.push(log);
+            }
         });
+        // Defensive: sort client-side just in case
+        logs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
         renderLogs();
     }, (error) => {
         logList.innerHTML = `<p>Error loading logs: ${error.message}</p>`;
     });
+
 }
 
 // Authentication Popup Modal Additions
