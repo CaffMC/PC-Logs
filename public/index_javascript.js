@@ -188,7 +188,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const signInBtn = document.getElementById('authSignInBtn');
 
     openAuthBtn.addEventListener('click', () => {
-        authModal.style.display = 'flex';
+        authModal.style.display = 'block';  // use 'block' instead of 'flex'
     });
 
     authClose.addEventListener('click', () => {
