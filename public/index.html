@@ -10,7 +10,8 @@
 
     <meta name="description"
         content="Track and log your PC builds and flips. Analyze profits, sale prices, and components with PC Build Logs." />
-    <meta name="keywords" content="PC build, PC logger, PC flipping, gaming PC, build logs, build profits, PC profit tracker, PC Build Tracker, PC flip Tracker" />
+    <meta name="keywords"
+        content="PC build, PC logger, PC flipping, gaming PC, build logs, build profits, PC profit tracker, PC Build Tracker, PC flip Tracker" />
 
     <link rel="canonical" href="https://pc-build-logs.web.app/" />
 
@@ -42,9 +43,9 @@
         <button id="openAuthPopup" class="btn">Sign In / Register</button>
     </nav>
 
-    <!-- Authentication Modal -->
+    <!-- Sign In / Sign Up Modal -->
     <div class="modal" id="authPopup" style="display:none;">
-        <div class="modal-content">
+        <div class="modal-content auth-container">
             <span class="close" id="authClose">&times;</span>
             <h2>Sign In / Sign Up</h2>
 
@@ -54,16 +55,14 @@
             <label for="passwordAuth">Password</label>
             <input type="password" id="passwordAuth" placeholder="Password" />
 
-            <button id="authSignUpBtn">Sign Up</button>
-            <button id="authSignInBtn">Sign In</button>
-            <button id="authGoogleBtn">Sign in with Google</button>
-            <button id="authSignOutBtn" style="display:none;">Sign Out</button>
+            <button id="authSignUpBtn" class="btn">Sign Up</button>
+            <button id="authSignInBtn" class="btn">Sign In</button>
+            <button id="authGoogleBtn" class="btn">Sign in with Google</button>
+            <button id="authSignOutBtn" class="btn" style="display:none;">Sign Out</button>
 
             <div id="authUserInfo"></div>
         </div>
     </div>
-
-
 
     <!-- Modal -->
     <div class="modal" id="modal">
